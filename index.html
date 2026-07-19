@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>スウィーティライブアーカイブ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=Oswald:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#14121a;          /* 客席の暗がり */
+  --bg-raise:#1d1a26;    /* カード面 */
+  --line:#332e42;
+  --amber:#f0a03c;       /* ステージ照明 */
+  --amber-dim:#8a6a3a;
+  --ink:#e8e4da;
+  --ink-sub:#9a94a8;
+  --disp:"Oswald","Zen Kaku Gothic New",sans-serif;
+  --serif:"Shippori Mincho",serif;
+  --body:"Zen Kaku Gothic New",sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);line-height:1.7}
+
+/* ---- ヘッダー ---- */
+header{
+  padding:64px 24px 40px;text-align:center;position:relative;overflow:hidden;
+}
+header::before{ /* スポットライト */
+  content:"";position:absolute;top:-120px;left:50%;transform:translateX(-50%);
+  width:520px;height:340px;
+  background:radial-gradient(ellipse at center top, rgba(240,160,60,.16), transparent 70%);
+  pointer-events:none;
+}
+header h1{
+  font-family:var(--disp);font-weight:600;font-size:clamp(2rem,6vw,3.4rem);
+  letter-spacing:.18em;color:var(--ink);
+}
+header h1 span{color:var(--amber)}
+header p{margin-top:10px;color:var(--ink-sub);font-size:.85rem;letter-spacing:.12em}
+
+/* ---- コントロール ---- */
+.controls{
+  max-width:960px;margin:0 auto;padding:0 24px 8px;
+  display:flex;flex-wrap:wrap;gap:12px;align-items:center;
+}
+.controls input,.controls select{
+  background:var(--bg-raise);border:1px solid var(--line);color:var(--ink);
+  font-family:var(--body);font-size:.9rem;padding:10px 14px;border-radius:4px;
+}
+.controls input{flex:1;min-width:200px}
+.controls input:focus,.controls select:focus{outline:2px solid var(--amber);outline-offset:1px}
+.controls input::placeholder{color:var(--ink-sub)}
+#count{color:var(--ink-sub);font-size:.8rem;margin-left:auto;letter-spacing:.05em}
+
+/* ---- カード ---- */
+main{max-width:960px;margin:0 auto;padding:24px}
+.card{
+  background:var(--bg-raise);border:1px solid var(--line);border-radius:6px;
+  margin-bottom:28px;overflow:hidden;
+}
+.card-head{
+  display:flex;align-items:baseline;gap:16px;flex-wrap:wrap;
+  padding:18px 22px 14px;border-bottom:1px solid var(--line);
+}
+.date{
+  font-family:var(--disp);font-weight:600;font-size:1.05rem;
+  color:var(--amber);letter-spacing:.08em;white-space:nowrap;
+}
+.title{font-family:var(--serif);font-weight:700;font-size:1.15rem}
+.meta{display:flex;gap:14px;flex-wrap:wrap;width:100%;margin-top:4px}
+.meta span{font-size:.8rem;color:var(--ink-sub);letter-spacing:.05em}
+.meta .venue::before{content:"▸ ";color:var(--amber-dim)}
+.meta .tour::before{content:"TOUR ";color:var(--amber-dim);font-family:var(--disp);font-size:.7rem;letter-spacing:.15em}
+
+/* サムネクリックで埋め込みを生成(初期表示を軽くする) */
+.player{position:relative;aspect-ratio:16/9;background:#000;cursor:pointer}
+.player img{width:100%;height:100%;object-fit:cover;opacity:.75;transition:opacity .2s}
+.player:hover img{opacity:1}
+.player .play{
+  position:absolute;inset:0;display:grid;place-items:center;pointer-events:none;
+}
+.player .play::after{
+  content:"";width:72px;height:50px;border-radius:10px;
+  background:rgba(20,18,26,.8) url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23f0a03c"><path d="M8 5v14l11-7z"/></svg>') center/28px no-repeat;
+  border:1px solid var(--amber-dim);
+}
+.player iframe{width:100%;height:100%;border:0;display:block}
+
+/* セトリ */
+details{border-top:1px solid var(--line)}
+details summary{
+  cursor:pointer;padding:12px 22px;font-family:var(--disp);font-size:.8rem;
+  letter-spacing:.2em;color:var(--ink-sub);list-style:none;user-select:none;
+}
+details summary::before{content:"＋ ";color:var(--amber)}
+details[open] summary::before{content:"－ "}
+details ol{
+  padding:0 22px 18px 46px;column-gap:40px;
+}
+details li{font-size:.9rem;padding:3px 0;color:var(--ink)}
+details li::marker{color:var(--amber-dim);font-family:var(--disp);font-size:.8rem}
+mark{background:transparent;color:var(--amber);font-weight:700}
+
+.tweet-slot{padding:0 22px 18px;min-height:40px}
+.tweet-slot a{color:var(--amber);font-size:.85rem}
+.tweet-slot .twitter-tweet{margin:0 auto!important}
+
+.flyer-slot{padding:0 22px 18px}
+.flyer-img{max-width:340px;width:100%;display:block;border:1px solid var(--line);border-radius:4px;cursor:zoom-in}
+#lightbox{
+  position:fixed;inset:0;background:rgba(10,9,14,.92);display:none;
+  place-items:center;z-index:100;cursor:zoom-out;padding:24px;
+}
+#lightbox.show{display:grid}
+#lightbox img{max-width:100%;max-height:100%;border-radius:4px}
+
+.empty{text-align:center;color:var(--ink-sub);padding:60px 0;font-size:.9rem}
+footer{text-align:center;color:var(--ink-sub);font-size:.75rem;padding:32px;letter-spacing:.1em}
+
+@media (max-width:600px){
+  details ol{columns:1}
+  .card-head{padding:14px 16px 12px}
+}
+@media (prefers-reduced-motion:reduce){
+  *{transition:none!important}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>SWEETIE <span>LIVE ARCHIVE</span></h1>
+  <p>スウィーティライブアーカイブ</p>
+</header>
+
+<div class="controls">
+  <input id="q" type="search" placeholder="曲名・会場・タイトルで検索" aria-label="検索">
+  <select id="tour" aria-label="ツアーで絞り込み"><option value="">すべてのツアー</option></select>
+  <select id="year" aria-label="年で絞り込み"><option value="">すべての年</option></select>
+  <span id="count"></span>
+</div>
+
+<main id="list"></main>
+<footer>All videos are embedded from YouTube.</footer>
+
+<script src="videos.js"></script>
+<script>
+
+/* ---------------- 以下ロジック(編集不要) ---------------- */
+const list = document.getElementById("list");
+const q = document.getElementById("q");
+const tourSel = document.getElementById("tour");
+const yearSel = document.getElementById("year");
+const count = document.getElementById("count");
+
+VIDEOS.sort((a,b)=>b.date.localeCompare(a.date));
+
+[...new Set(VIDEOS.map(v=>v.tour).filter(Boolean))].forEach(t=>{
+  tourSel.insertAdjacentHTML("beforeend",`<option>${t}</option>`);
+});
+[...new Set(VIDEOS.map(v=>v.date.slice(0,4)))].sort().reverse().forEach(y=>{
+  yearSel.insertAdjacentHTML("beforeend",`<option>${y}</option>`);
+});
+
+function esc(s){return s.replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function hl(s,kw){
+  if(!kw) return esc(s);
+  const i = s.toLowerCase().indexOf(kw.toLowerCase());
+  if(i<0) return esc(s);
+  return esc(s.slice(0,i))+"<mark>"+esc(s.slice(i,i+kw.length))+"</mark>"+esc(s.slice(i+kw.length));
+}
+function fmtDate(d){
+  const [y,m,dd]=d.split("-");
+  return `${y}.${m}.${dd}`;
+}
+
+function render(){
+  const kw = q.value.trim();
+  const tour = tourSel.value;
+  const year = yearSel.value;
+  const hits = VIDEOS.filter(v=>{
+    if(tour && v.tour!==tour) return false;
+    if(year && !v.date.startsWith(year)) return false;
+    if(kw){
+      const hay = [v.title,v.venue,v.tour,...v.setlist].join(" ").toLowerCase();
+      if(!hay.includes(kw.toLowerCase())) return false;
+    }
+    return true;
+  });
+  count.textContent = `${hits.length} / ${VIDEOS.length} 本`;
+  if(!hits.length){ list.innerHTML = `<p class="empty">該当する映像がありません</p>`; return; }
+  list.innerHTML = hits.map(v=>`
+    <article class="card">
+      <div class="card-head">
+        <span class="date">${fmtDate(v.date)}</span>
+        <span class="title">${hl(v.title,kw)}</span>
+        <div class="meta">
+          <span class="venue">${hl(v.venue,kw)}</span>
+          ${v.tour?`<span class="tour">${hl(v.tour,kw)}</span>`:""}
+        </div>
+      </div>
+      <div class="player" data-id="${v.id}" role="button" tabindex="0" aria-label="再生: ${esc(v.title)}">
+        <img loading="lazy" src="https://i.ytimg.com/vi/${v.id}/hqdefault.jpg" alt="">
+        <span class="play"></span>
+      </div>
+      ${v.flyer?`
+      <details class="flyer-box">
+        <summary>告知画像</summary>
+        <div class="flyer-slot"><img loading="lazy" src="${esc(v.flyer)}" alt="告知画像: ${esc(v.title)}" class="flyer-img" tabindex="0"></div>
+      </details>`:""}
+      ${v.setlist.length?`
+      <details ${kw && v.setlist.some(s=>s.toLowerCase().includes(kw.toLowerCase()))?"open":""}>
+        <summary>SETLIST</summary>
+        <ol>${v.setlist.map(s=>`<li>${hl(s,kw)}</li>`).join("")}</ol>
+      </details>`:""}
+      ${v.tweet?`
+      <details class="tweet-box" data-tweet="${esc(v.tweet)}">
+        <summary>告知ツイート</summary>
+        <div class="tweet-slot"><a href="${esc(v.tweet)}" target="_blank" rel="noopener">読み込み中… 表示されない場合はこちら</a></div>
+      </details>`:""}
+    </article>`).join("");
+}
+
+function activate(el){
+  el.innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${el.dataset.id}?autoplay=1" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen title="YouTube video"></iframe>`;
+  el.style.cursor="default";
+}
+list.addEventListener("click",e=>{
+  const p = e.target.closest(".player[data-id]");
+  if(p && !p.querySelector("iframe")) activate(p);
+});
+list.addEventListener("keydown",e=>{
+  if(e.key!=="Enter" && e.key!==" ") return;
+  const p = e.target.closest(".player[data-id]");
+  if(p && !p.querySelector("iframe")){ e.preventDefault(); activate(p); }
+});
+
+q.addEventListener("input",render);
+
+/* 告知画像:クリックで拡大表示 */
+const lb = document.createElement("div");
+lb.id = "lightbox";
+lb.innerHTML = "<img alt=''>";
+document.body.appendChild(lb);
+list.addEventListener("click",e=>{
+  const img = e.target.closest(".flyer-img");
+  if(!img) return;
+  lb.querySelector("img").src = img.src;
+  lb.classList.add("show");
+});
+lb.addEventListener("click",()=>lb.classList.remove("show"));
+document.addEventListener("keydown",e=>{ if(e.key==="Escape") lb.classList.remove("show"); });
+
+/* 告知ツイート:detailsを開いた時に初めて埋め込む */
+let twLoaded = false;
+function loadTwitterWidgets(cb){
+  if(window.twttr && twttr.widgets){ cb(); return; }
+  if(!twLoaded){
+    twLoaded = true;
+    const s = document.createElement("script");
+    s.src = "https://platform.twitter.com/widgets.js";
+    s.onload = cb;
+    document.head.appendChild(s);
+  }else{
+    const wait = setInterval(()=>{ if(window.twttr && twttr.widgets){ clearInterval(wait); cb(); } },200);
+  }
+}
+list.addEventListener("toggle",e=>{
+  const d = e.target;
+  if(!d.classList || !d.classList.contains("tweet-box") || !d.open || d.dataset.done) return;
+  d.dataset.done = "1";
+  const slot = d.querySelector(".tweet-slot");
+  loadTwitterWidgets(()=>{
+    const id = (d.dataset.tweet.match(/status\/(\d+)/)||[])[1];
+    if(!id) return;
+    slot.textContent = "";
+    twttr.widgets.createTweet(id, slot, {theme:"dark", lang:"ja"}).then(el=>{
+      if(!el) slot.innerHTML = `<a href="${d.dataset.tweet}" target="_blank" rel="noopener">ツイートを開く(削除済みの可能性あり)</a>`;
+    });
+  });
+}, true);
+
+tourSel.addEventListener("change",render);
+yearSel.addEventListener("change",render);
+render();
+</script>
+</body>
+</html>

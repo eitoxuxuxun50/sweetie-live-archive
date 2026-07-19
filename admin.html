@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>データ入力</title>
+<style>
+:root{
+  --bg:#14121a;--raise:#1d1a26;--line:#332e42;
+  --amber:#f0a03c;--ink:#e8e4da;--sub:#9a94a8;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:"Zen Kaku Gothic New",sans-serif;line-height:1.7;padding:32px 16px;max-width:640px;margin:0 auto}
+h1{font-size:1.2rem;letter-spacing:.1em;margin-bottom:4px}
+p.note{color:var(--sub);font-size:.8rem;margin-bottom:24px}
+label{display:block;font-size:.8rem;color:var(--sub);margin:14px 0 4px;letter-spacing:.05em}
+select,input,textarea{
+  width:100%;background:var(--raise);border:1px solid var(--line);color:var(--ink);
+  font-family:inherit;font-size:.95rem;padding:10px 12px;border-radius:4px;
+}
+select:focus,input:focus,textarea:focus{outline:2px solid var(--amber);outline-offset:1px}
+textarea{min-height:120px;resize:vertical}
+.hint{font-size:.72rem;color:var(--sub);margin-top:2px}
+button{
+  margin-top:20px;background:var(--amber);color:#14121a;border:0;border-radius:4px;
+  font-family:inherit;font-weight:700;font-size:.95rem;padding:12px 24px;cursor:pointer;
+}
+button.copy{background:transparent;color:var(--amber);border:1px solid var(--amber)}
+pre{
+  margin-top:16px;background:var(--raise);border:1px solid var(--line);border-radius:4px;
+  padding:16px;font-size:.8rem;overflow-x:auto;white-space:pre-wrap;word-break:break-all;
+}
+#msg{color:var(--amber);font-size:.8rem;margin-left:12px}
+</style>
+</head>
+<body>
+<div id="gate" style="position:fixed;inset:0;background:var(--bg);z-index:200;display:grid;place-items:center;padding:24px">
+  <div style="width:100%;max-width:320px">
+    <label for="pw">パスワード</label>
+    <input id="pw" type="password" autocomplete="off">
+    <button id="pwbtn" style="width:100%">入る</button>
+    <p id="pwmsg" class="hint" style="margin-top:8px"></p>
+  </div>
+</div>
+<h1>動画データ入力</h1>
+<p class="note">入力→生成→コピーして、videos.js の中身を丸ごと置き換える</p>
+
+<label for="entry">編集対象</label>
+<select id="entry"><option value="-1">新規追加</option></select>
+<p class="hint">既存ライブを選ぶと内容が読み込まれる。セトリ追記などはここから</p>
+
+<label for="url">YouTube URL または動画ID</label>
+<input id="url" placeholder="https://www.youtube.com/watch?v=xxxx / https://youtu.be/xxxx / ID直接">
+
+<label for="yttitle">YouTubeの動画タイトル(貼ると下の項目を自動入力)</label>
+<input id="yttitle" placeholder="【LIVE】2026.05.10 スウィーティ SAMPLE TOUR 2026 大阪編 @梅田Shangri-La">
+<p class="hint">タイトル統一ルールの形式なら日付・タイトル・ツアー・会場を自動で埋める</p>
+
+<label for="date">日付</label>
+<input id="date" type="date">
+
+<label for="title">表示タイトル</label>
+<input id="title" placeholder="ワンマン「タイトル」">
+
+<label for="tour">ツアー名(単発は空欄)</label>
+<input id="tour">
+
+<label for="venue">会場</label>
+<input id="venue" placeholder="梅田Shangri-La">
+
+<label for="setlist">セトリ(1行1曲、不明なら空欄)</label>
+<textarea id="setlist"></textarea>
+
+<label for="tweet">告知ツイートURL(任意)</label>
+<input id="tweet">
+
+<label for="flyerfile">告知画像(任意)</label>
+<input id="flyerfile" type="file" accept="image/*">
+<p class="hint">選択するとGitHub保存時に flyers/日付.拡張子 でアップロードされる</p>
+<input id="flyer" placeholder="既にリポジトリにある画像を使う場合はパスを直接入力">
+
+<button id="gen">生成</button>
+<button id="save" class="copy">GitHubに保存</button>
+<button id="copy" class="copy" hidden>コピー</button><span id="msg"></span>
+<pre id="out" hidden></pre>
+
+<details id="ghset" style="margin-top:28px">
+  <summary style="cursor:pointer;color:var(--sub);font-size:.8rem">GitHub連携設定(初回のみ)</summary>
+  <label for="gh_owner">ユーザー名</label><input id="gh_owner">
+  <label for="gh_repo">リポジトリ名</label><input id="gh_repo">
+  <label for="gh_branch">ブランチ</label><input id="gh_branch" placeholder="main">
+  <label for="gh_token">Personal Access Token</label><input id="gh_token" type="password">
+  <p class="hint">Fine-grained tokenで対象リポジトリのContents: Read and writeのみ許可。ブラウザのlocalStorageに保存されるので共用PCでは使わない</p>
+  <button id="ghsave" class="copy">設定を保存</button>
+</details>
+
+<script src="videos.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+
+/* ---------- パスワードゲート ---------- */
+const PW_HASH = "96d28bd0c687c2d8295bf0463112eb1b0ba703dc4d13fa2b85890e3b10093ffa";
+async function sha256(s){
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s));
+  return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,"0")).join("");
+}
+async function tryUnlock(pw){
+  if(await sha256(pw) === PW_HASH){
+    sessionStorage.setItem("unlocked","1");
+    $("gate").remove();
+    return true;
+  }
+  return false;
+}
+if(sessionStorage.getItem("unlocked")==="1"){
+  $("gate").remove();
+}else{
+  $("pwbtn").addEventListener("click", async ()=>{
+    if(!await tryUnlock($("pw").value)) $("pwmsg").textContent = "違う";
+  });
+  $("pw").addEventListener("keydown", async e=>{
+    if(e.key==="Enter" && !await tryUnlock($("pw").value)) $("pwmsg").textContent = "違う";
+  });
+}
+const DATA = (typeof VIDEOS !== "undefined") ? VIDEOS.slice() : [];
+DATA.sort((a,b)=>b.date.localeCompare(a.date));
+
+/* 既存エントリをプルダウンに */
+DATA.forEach((v,i)=>{
+  const o = document.createElement("option");
+  o.value = i;
+  o.textContent = `${v.date} ${v.title || v.venue}`;
+  $("entry").appendChild(o);
+});
+$("entry").addEventListener("change", ()=>{
+  const i = +$("entry").value;
+  if(i < 0){ ["url","yttitle","date","title","tour","venue","setlist","tweet","flyer"].forEach(k=>$(k).value=""); return; }
+  const v = DATA[i];
+  $("url").value = v.id;
+  $("yttitle").value = "";
+  $("date").value = v.date;
+  $("title").value = v.title || "";
+  $("tour").value = v.tour || "";
+  $("venue").value = v.venue || "";
+  $("setlist").value = (v.setlist||[]).join("\n");
+  $("tweet").value = v.tweet || "";
+  $("flyer").value = v.flyer || "";
+});
+
+/* 動画ID抽出 */
+function videoId(s){
+  s = s.trim();
+  const m = s.match(/(?:v=|youtu\.be\/|shorts\/|embed\/)([\w-]{11})/);
+  if(m) return m[1];
+  if(/^[\w-]{11}$/.test(s)) return s;
+  return "";
+}
+
+/* タイトル統一ルールのパース
+   【LIVE】2026.05.10 スウィーティ <本文> @会場 */
+$("yttitle").addEventListener("input", ()=>{
+  const t = $("yttitle").value;
+  const d = t.match(/(\d{4})[.\/-](\d{1,2})[.\/-](\d{1,2})/);
+  if(d) $("date").value = `${d[1]}-${d[2].padStart(2,"0")}-${d[3].padStart(2,"0")}`;
+  const v = t.match(/[@@]\s*(.+?)\s*$/);
+  if(v) $("venue").value = v[1];
+  let body = t
+    .replace(/【[^】]*】/g,"")
+    .replace(/\d{4}[.\/-]\d{1,2}[.\/-]\d{1,2}/,"")
+    .replace(/[@@].*$/,"")
+    .replace(/スウィーティ/,"")
+    .trim();
+  if(body){
+    $("title").value = body;
+    const tour = body.match(/(.*(?:TOUR|ツアー)[^\s]*(?:\s\d{4})?)/i);
+    if(tour) $("tour").value = tour[1].trim();
+  }
+});
+
+$("date").addEventListener("change", ()=>{
+  if($("date").value) $("flyer").placeholder = `flyers/${$("date").value}.jpg (ダブルクリックで入力)`;
+});
+$("flyer").addEventListener("dblclick", ()=>{
+  if(!$("flyer").value && $("date").value) $("flyer").value = `flyers/${$("date").value}.jpg`;
+});
+
+function j(s){ return JSON.stringify(s); }
+
+function entryToText(v){
+  const fields = [
+    `    id: ${j(v.id)}`,
+    `    date: ${j(v.date)}`,
+    `    title: ${j(v.title)}`,
+    `    tour: ${j(v.tour)}`,
+    `    venue: ${j(v.venue)}`,
+    `    setlist: [${v.setlist.map(j).join(", ")}]`
+  ];
+  if(v.tweet) fields.push(`    tweet: ${j(v.tweet)}`);
+  if(v.flyer) fields.push(`    flyer: ${j(v.flyer)}`);
+  return `  {\n${fields.join(",\n")}\n  }`;
+}
+
+const HEADER = `/* ============================================================
+   動画データ:admin.html で生成して丸ごと置き換える
+   id / date / title / tour / venue / setlist / tweet / flyer
+   ============================================================ */`;
+
+function buildOutput(){
+  const id = videoId($("url").value);
+  if(!id){ $("msg").textContent = "動画IDが読み取れない"; return null; }
+  if(!$("date").value){ $("msg").textContent = "日付が未入力"; return null; }
+  $("msg").textContent = "";
+  /* 画像ファイルが選ばれていればflyerパスを自動決定 */
+  const f = $("flyerfile").files[0];
+  if(f && !$("flyer").value.trim()){
+    const ext = (f.name.split(".").pop()||"jpg").toLowerCase();
+    $("flyer").value = `flyers/${$("date").value}.${ext}`;
+  }
+  const v = {
+    id,
+    date: $("date").value,
+    title: $("title").value.trim(),
+    tour: $("tour").value.trim(),
+    venue: $("venue").value.trim(),
+    setlist: $("setlist").value.split("\n").map(s=>s.trim()).filter(Boolean),
+    tweet: $("tweet").value.trim(),
+    flyer: $("flyer").value.trim()
+  };
+  const i = +$("entry").value;
+  if(i >= 0) DATA[i] = v; else DATA.unshift(v);
+  DATA.sort((a,b)=>b.date.localeCompare(a.date));
+  return `${HEADER}\nconst VIDEOS = [\n${DATA.map(entryToText).join(",\n")}\n];\n`;
+}
+
+$("gen").addEventListener("click", ()=>{
+  const out = buildOutput();
+  if(!out) return;
+  $("out").textContent = out;
+  $("out").hidden = false;
+  $("copy").hidden = false;
+  $("msg").textContent = "videos.js の中身を丸ごとこれに置き換える";
+});
+
+/* ---------- GitHub連携 ---------- */
+const CONF_KEY = "gh_conf";
+function loadConf(){
+  try{ return JSON.parse(localStorage.getItem(CONF_KEY)) || {}; }catch{ return {}; }
+}
+(function(){
+  const c = loadConf();
+  if(c.owner) $("gh_owner").value = c.owner;
+  if(c.repo) $("gh_repo").value = c.repo;
+  if(c.branch) $("gh_branch").value = c.branch;
+  if(c.token) $("gh_token").value = c.token;
+})();
+$("ghsave").addEventListener("click", ()=>{
+  localStorage.setItem(CONF_KEY, JSON.stringify({
+    owner: $("gh_owner").value.trim(),
+    repo: $("gh_repo").value.trim(),
+    branch: $("gh_branch").value.trim() || "main",
+    token: $("gh_token").value.trim()
+  }));
+  $("msg").textContent = "設定を保存した";
+});
+
+async function ghPut(conf, path, base64Content, message){
+  const api = `https://api.github.com/repos/${conf.owner}/${conf.repo}/contents/${path}`;
+  const headers = {
+    "Authorization": `Bearer ${conf.token}`,
+    "Accept": "application/vnd.github+json"
+  };
+  /* 既存ファイルならshaが必要 */
+  let sha;
+  const r0 = await fetch(`${api}?ref=${conf.branch}`, {headers});
+  if(r0.ok) sha = (await r0.json()).sha;
+  const body = {message, content: base64Content, branch: conf.branch};
+  if(sha) body.sha = sha;
+  const r = await fetch(api, {method:"PUT", headers, body: JSON.stringify(body)});
+  if(!r.ok) throw new Error(`${path}: ${r.status} ${(await r.json()).message||""}`);
+}
+
+function fileToBase64(file){
+  return new Promise((res,rej)=>{
+    const r = new FileReader();
+    r.onload = ()=>res(r.result.split(",")[1]);
+    r.onerror = ()=>rej(new Error("画像の読み込みに失敗"));
+    r.readAsDataURL(file);
+  });
+}
+
+$("save").addEventListener("click", async ()=>{
+  const conf = loadConf();
+  if(!conf.token || !conf.owner || !conf.repo){
+    $("msg").textContent = "先に下のGitHub連携設定を保存する";
+    $("ghset").open = true;
+    return;
+  }
+  const out = buildOutput();
+  if(!out) return;
+  $("out").textContent = out;
+  $("out").hidden = false;
+  $("save").disabled = true;
+  try{
+    const f = $("flyerfile").files[0];
+    if(f){
+      $("msg").textContent = "画像をアップロード中…";
+      await ghPut(conf, $("flyer").value.trim(), await fileToBase64(f), `add flyer ${$("date").value}`);
+    }
+    $("msg").textContent = "videos.js を更新中…";
+    await ghPut(conf, "videos.js", btoa(unescape(encodeURIComponent(out))), `update videos.js (${$("date").value})`);
+    $("msg").textContent = "保存完了。数十秒でサイトに反映される";
+  }catch(e){
+    $("msg").textContent = "エラー: " + e.message;
+  }finally{
+    $("save").disabled = false;
+  }
+});
+
+$("copy").addEventListener("click", async ()=>{
+  await navigator.clipboard.writeText($("out").textContent);
+  $("msg").textContent = "コピーした";
+});
+</script>
+</body>
+</html>
