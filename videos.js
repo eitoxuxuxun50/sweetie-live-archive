@@ -10,6 +10,7 @@ const VIDEOS = [
     tour: "",
     venue: "八王子Match Vox",
     setlist: [],
+    tweet: "https://x.com/sweetie_genki/status/2048060985173586291",
     flyer: "flyers/2026-06-20.jpg"
   },
   {
