@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>スウィーティライブアーカイブ</title>
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-180.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=Oswald:wght@400;600&display=swap" rel="stylesheet">
@@ -145,7 +147,10 @@ footer{text-align:center;color:var(--ink-sub);font-size:.75rem;padding:32px;lett
 <main id="list"></main>
 <footer>All videos are embedded from YouTube.</footer>
 
-<script src="videos.js"></script>
+<script>
+/* videos.jsをキャッシュ無効で読み込む */
+document.write('<scr'+'ipt src="videos.js?v='+Date.now()+'"></scr'+'ipt>');
+</script>
 <script>
 
 /* ---------------- 以下ロジック(編集不要) ---------------- */

@@ -95,7 +95,10 @@ pre{
   <button id="ghsave" class="copy">設定を保存</button>
 </details>
 
-<script src="videos.js"></script>
+<script>
+/* videos.jsをキャッシュ無効で読み込む */
+document.write('<scr'+'ipt src="videos.js?v='+Date.now()+'"></scr'+'ipt>');
+</script>
 <script>
 const $ = id => document.getElementById(id);
 
