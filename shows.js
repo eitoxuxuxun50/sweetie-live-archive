@@ -12,6 +12,18 @@ const SHOWS = [
     price: "2,000円+1D",
     onsale: "2026-06-03",
     ticket: "https://x.com/kakeochigokko/status/2062128111693816082?s=46",
+    flyer: "flyers/2026-07-31.jpeg",
+    note: "RATFLAP\n川の石\nかけおちごっこ\nアタギケンスケ\n出店\nCham Cham\n無人古着家"
+  },
+  {
+    date: "2026-07-31",
+    open: "18:30",
+    start: "19:00",
+    venue: "BAR TONE8.0 +BASEMENT GALLERY",
+    title: "おなじ街",
+    price: "2,000円+1D",
+    onsale: "2026-06-03",
+    ticket: "https://x.com/kakeochigokko/status/2062128111693816082?s=46",
     flyer: "flyers/2026-07-31.jpeg"
   },
   {
