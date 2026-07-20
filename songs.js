@@ -4,13 +4,12 @@
    ============================================================ */
 const SONGS = [
   {
-    title: "サンプル曲",
-    release: "2025-08-01",
-    length: "4:12",
+    title: "いい夢みてね",
+    release: "2026-03-24",
+    length: "3:04",
     key: "C",
-    capo: 2,
-    spotify: "",
-    youtube: "",
-    note: ""
+    capo: 1,
+    spotify: "https://open.spotify.com/track/6WMVIikBnydhry84ByUmKe?si=I7wL8o7RStCNNquvsrRf6Q&utm_source=copy-link",
+    youtube: "https://m.youtube.com/watch?v=FeqSDGkq60Y"
   }
 ];
