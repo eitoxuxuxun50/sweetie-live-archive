@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>楽曲データ入力</title>
+<style>
+:root{
+  --bg:#14121a;--raise:#1d1a26;--line:#332e42;
+  --amber:#f0a03c;--ink:#e8e4da;--sub:#9a94a8;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:"Zen Kaku Gothic New",sans-serif;line-height:1.7;padding:32px 16px;max-width:640px;margin:0 auto}
+h1{font-size:1.2rem;letter-spacing:.1em;margin-bottom:4px}
+p.note{color:var(--sub);font-size:.8rem;margin-bottom:24px}
+label{display:block;font-size:.8rem;color:var(--sub);margin:14px 0 4px;letter-spacing:.05em}
+select,input,textarea{
+  width:100%;background:var(--raise);border:1px solid var(--line);color:var(--ink);
+  font-family:inherit;font-size:.95rem;padding:10px 12px;border-radius:4px;
+}
+select:focus,input:focus,textarea:focus{outline:2px solid var(--amber);outline-offset:1px}
+textarea{min-height:70px;resize:vertical}
+.hint{font-size:.72rem;color:var(--sub);margin-top:2px}
+.row{display:flex;gap:12px}
+.row>div{flex:1}
+button{
+  margin-top:20px;background:var(--amber);color:#14121a;border:0;border-radius:4px;
+  font-family:inherit;font-weight:700;font-size:.95rem;padding:12px 24px;cursor:pointer;
+}
+button.copy{background:transparent;color:var(--amber);border:1px solid var(--amber)}
+pre{
+  margin-top:16px;background:var(--raise);border:1px solid var(--line);border-radius:4px;
+  padding:16px;font-size:.8rem;overflow-x:auto;white-space:pre-wrap;word-break:break-all;
+}
+#msg{color:var(--amber);font-size:.8rem;margin-left:12px}
+</style>
+</head>
+<body>
+<div id="gate" style="position:fixed;inset:0;background:var(--bg);z-index:200;display:grid;place-items:center;padding:24px">
+  <div style="width:100%;max-width:320px">
+    <label for="pw">パスワード</label>
+    <input id="pw" type="password" autocomplete="off">
+    <button id="pwbtn" style="width:100%">入る</button>
+    <p id="pwmsg" class="hint" style="margin-top:8px"></p>
+  </div>
+</div>
+
+<h1>楽曲データ入力</h1>
+<p class="note">入力→生成→GitHubに保存。songs.js を丸ごと更新する</p>
+
+<label for="entry">編集対象</label>
+<select id="entry"><option value="-1">新規追加</option></select>
+<p class="hint">既存曲を選ぶと内容が読み込まれる。情報の修正はここから</p>
+
+<label for="title">曲名</label>
+<input id="title" placeholder="曲名">
+
+<label for="release">リリース日</label>
+<input id="release" type="date">
+
+<div class="row">
+  <div>
+    <label for="length">長さ</label>
+    <input id="length" placeholder="4:12">
+  </div>
+  <div>
+    <label for="key">キー</label>
+    <input id="key" placeholder="C / Am / F#m など">
+  </div>
+  <div>
+    <label for="capo">カポ</label>
+    <input id="capo" type="number" min="0" max="12" placeholder="2">
+  </div>
+</div>
+<p class="hint">カポなしは 0。不明なら空欄</p>
+
+<label for="spotify">Spotify URL(任意)</label>
+<input id="spotify" placeholder="https://open.spotify.com/track/...">
+
+<label for="youtube">YouTube URL(任意)</label>
+<input id="youtube" placeholder="https://youtu.be/... / https://www.youtube.com/watch?v=...">
+
+<label for="note">メモ(任意)</label>
+<textarea id="note" placeholder="チューニング、別アレンジ等"></textarea>
+
+<button id="gen">生成</button>
+<button id="save" class="copy">GitHubに保存</button>
+<button id="copy" class="copy" hidden>コピー</button><span id="msg"></span>
+<pre id="out" hidden></pre>
+
+<details id="ghset" style="margin-top:28px">
+  <summary style="cursor:pointer;color:var(--sub);font-size:.8rem">GitHub連携設定(初回のみ)</summary>
+  <label for="gh_owner">ユーザー名</label><input id="gh_owner">
+  <label for="gh_repo">リポジトリ名</label><input id="gh_repo">
+  <label for="gh_branch">ブランチ</label><input id="gh_branch" placeholder="main">
+  <label for="gh_token">Personal Access Token</label><input id="gh_token" type="password">
+  <p class="hint">admin.html と同じ設定が共有される。片方で保存すれば両方で使える</p>
+  <button id="ghsave" class="copy">設定を保存</button>
+</details>
+
+<script>
+/* songs.jsをキャッシュ無効で読み込む */
+document.write('<scr'+'ipt src="songs.js?v='+Date.now()+'"></scr'+'ipt>');
+</script>
+<script>
+const $ = id => document.getElementById(id);
+
+/* ---------- パスワードゲート(admin.htmlと共通) ---------- */
+const PW_HASH = "96d28bd0c687c2d8295bf0463112eb1b0ba703dc4d13fa2b85890e3b10093ffa";
+async function sha256(s){
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s));
+  return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,"0")).join("");
+}
+async function tryUnlock(pw){
+  if(await sha256(pw) === PW_HASH){
+    sessionStorage.setItem("unlocked","1");
+    $("gate").remove();
+    return true;
+  }
+  return false;
+}
+if(sessionStorage.getItem("unlocked")==="1"){
+  $("gate").remove();
+}else{
+  $("pwbtn").addEventListener("click", async ()=>{
+    if(!await tryUnlock($("pw").value)) $("pwmsg").textContent = "違う";
+  });
+  $("pw").addEventListener("keydown", async e=>{
+    if(e.key==="Enter" && !await tryUnlock($("pw").value)) $("pwmsg").textContent = "違う";
+  });
+}
+
+const DATA = (typeof SONGS !== "undefined") ? SONGS.slice() : [];
+DATA.sort((a,b)=>(b.release||"").localeCompare(a.release||""));
+
+/* 既存エントリをプルダウンに */
+DATA.forEach((s,i)=>{
+  const o=document.createElement("option");
+  o.value=i; o.textContent=`${s.title}${s.release?" ("+s.release+")":""}`;
+  $("entry").appendChild(o);
+});
+$("entry").addEventListener("change", ()=>{
+  const i=+$("entry").value;
+  const keys=["title","release","length","key","capo","spotify","youtube","note"];
+  if(i<0){ keys.forEach(k=>$(k).value=""); return; }
+  const s=DATA[i];
+  $("title").value=s.title||"";
+  $("release").value=s.release||"";
+  $("length").value=s.length||"";
+  $("key").value=s.key||"";
+  $("capo").value=(s.capo===0||s.capo)?s.capo:"";
+  $("spotify").value=s.spotify||"";
+  $("youtube").value=s.youtube||"";
+  $("note").value=s.note||"";
+});
+
+function j(s){ return JSON.stringify(s); }
+
+function entryToText(s){
+  const fields=[
+    `    title: ${j(s.title)}`,
+    `    release: ${j(s.release)}`,
+    `    length: ${j(s.length)}`,
+    `    key: ${j(s.key)}`,
+    `    capo: ${s.capo}`
+  ];
+  if(s.spotify) fields.push(`    spotify: ${j(s.spotify)}`);
+  if(s.youtube) fields.push(`    youtube: ${j(s.youtube)}`);
+  if(s.note) fields.push(`    note: ${j(s.note)}`);
+  return `  {\n${fields.join(",\n")}\n  }`;
+}
+
+const HEADER = `/* ============================================================
+   楽曲データ:songs-admin.html で生成して丸ごと置き換える
+   title / release / length / key / capo / spotify / youtube / note
+   ============================================================ */`;
+
+function buildOutput(){
+  if(!$("title").value.trim()){ $("msg").textContent="曲名が未入力"; return null; }
+  $("msg").textContent="";
+  const capoRaw=$("capo").value.trim();
+  const s={
+    title:$("title").value.trim(),
+    release:$("release").value,
+    length:$("length").value.trim(),
+    key:$("key").value.trim(),
+    capo: capoRaw===""? -1 : Number(capoRaw),
+    spotify:$("spotify").value.trim(),
+    youtube:$("youtube").value.trim(),
+    note:$("note").value.trim()
+  };
+  const i=+$("entry").value;
+  if(i>=0) DATA[i]=s; else DATA.unshift(s);
+  DATA.sort((a,b)=>(b.release||"").localeCompare(a.release||""));
+  return `${HEADER}\nconst SONGS = [\n${DATA.map(entryToText).join(",\n")}\n];\n`;
+}
+
+$("gen").addEventListener("click", ()=>{
+  const out=buildOutput();
+  if(!out) return;
+  $("out").textContent=out; $("out").hidden=false; $("copy").hidden=false;
+  $("msg").textContent="songs.js の中身を丸ごとこれに置き換える";
+});
+$("copy").addEventListener("click", async ()=>{
+  await navigator.clipboard.writeText($("out").textContent);
+  $("msg").textContent="コピーした";
+});
+
+/* ---------- GitHub連携(admin.htmlと同じCONF_KEY) ---------- */
+const CONF_KEY="gh_conf";
+function loadConf(){ try{ return JSON.parse(localStorage.getItem(CONF_KEY))||{}; }catch{ return {}; } }
+(function(){
+  const c=loadConf();
+  if(c.owner)$("gh_owner").value=c.owner;
+  if(c.repo)$("gh_repo").value=c.repo;
+  if(c.branch)$("gh_branch").value=c.branch;
+  if(c.token)$("gh_token").value=c.token;
+})();
+$("ghsave").addEventListener("click", ()=>{
+  localStorage.setItem(CONF_KEY, JSON.stringify({
+    owner:$("gh_owner").value.trim(),
+    repo:$("gh_repo").value.trim(),
+    branch:$("gh_branch").value.trim()||"main",
+    token:$("gh_token").value.trim()
+  }));
+  $("msg").textContent="設定を保存した";
+});
+
+async function ghPut(conf, path, base64Content, message){
+  const api=`https://api.github.com/repos/${conf.owner}/${conf.repo}/contents/${path}`;
+  const headers={"Authorization":`Bearer ${conf.token}`,"Accept":"application/vnd.github+json"};
+  let sha;
+  const r0=await fetch(`${api}?ref=${conf.branch}`,{headers});
+  if(r0.ok) sha=(await r0.json()).sha;
+  const body={message, content:base64Content, branch:conf.branch};
+  if(sha) body.sha=sha;
+  const r=await fetch(api,{method:"PUT",headers,body:JSON.stringify(body)});
+  if(!r.ok) throw new Error(`${path}: ${r.status} ${(await r.json()).message||""}`);
+}
+
+$("save").addEventListener("click", async ()=>{
+  const conf=loadConf();
+  if(!conf.token||!conf.owner||!conf.repo){
+    $("msg").textContent="先に下のGitHub連携設定を保存する";
+    $("ghset").open=true; return;
+  }
+  const out=buildOutput();
+  if(!out) return;
+  $("out").textContent=out; $("out").hidden=false;
+  $("save").disabled=true;
+  try{
+    $("msg").textContent="songs.js を更新中…";
+    await ghPut(conf,"songs.js",btoa(unescape(encodeURIComponent(out))),`update songs.js (${$("title").value.trim()})`);
+    $("msg").textContent="保存完了。数十秒でサイトに反映される";
+  }catch(e){
+    $("msg").textContent="エラー: "+e.message;
+  }finally{
+    $("save").disabled=false;
+  }
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ライブ予定 | スウィーティ</title>
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=Oswald:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#14121a;--bg-raise:#1d1a26;--line:#332e42;
+  --amber:#f0a03c;--amber-dim:#8a6a3a;--ink:#e8e4da;--ink-sub:#9a94a8;
+  --disp:"Oswald","Zen Kaku Gothic New",sans-serif;
+  --serif:"Shippori Mincho",serif;
+  --body:"Zen Kaku Gothic New",sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);line-height:1.7}
+
+header{padding:56px 24px 32px;text-align:center;position:relative;overflow:hidden}
+header::before{
+  content:"";position:absolute;top:-120px;left:50%;transform:translateX(-50%);
+  width:520px;height:340px;
+  background:radial-gradient(ellipse at center top, rgba(240,160,60,.16), transparent 70%);
+  pointer-events:none;
+}
+header h1{font-family:var(--disp);font-weight:600;font-size:clamp(1.8rem,5vw,2.8rem);letter-spacing:.16em}
+header h1 span{color:var(--amber)}
+.nav{margin-top:12px;display:flex;gap:18px;justify-content:center;font-size:.8rem;flex-wrap:wrap}
+.nav a{color:var(--ink-sub);text-decoration:none;letter-spacing:.08em;padding-bottom:2px;border-bottom:1px solid transparent}
+.nav a:hover{color:var(--amber)}
+.nav a.active{color:var(--amber);border-color:var(--amber-dim)}
+
+main{max-width:760px;margin:0 auto;padding:24px}
+.section-label{
+  font-family:var(--disp);font-size:.78rem;letter-spacing:.25em;color:var(--ink-sub);
+  margin:28px 0 14px;padding-bottom:8px;border-bottom:1px solid var(--line);
+}
+.section-label:first-child{margin-top:8px}
+
+.show{
+  display:flex;gap:20px;background:var(--bg-raise);border:1px solid var(--line);
+  border-radius:6px;padding:20px;margin-bottom:18px;
+}
+.show.past{opacity:.6}
+.date-box{flex-shrink:0;text-align:center;min-width:64px}
+.date-box .m{font-family:var(--disp);font-size:.8rem;letter-spacing:.1em;color:var(--amber)}
+.date-box .d{font-family:var(--disp);font-size:2rem;line-height:1;color:var(--ink)}
+.date-box .y{font-family:var(--disp);font-size:.72rem;color:var(--ink-sub)}
+.date-box .w{font-size:.72rem;color:var(--ink-sub);margin-top:2px}
+.body{flex:1;min-width:0}
+.body .title{font-family:var(--serif);font-weight:700;font-size:1.15rem;margin-bottom:4px}
+.body .venue{font-size:.9rem;color:var(--ink)}
+.body .venue::before{content:"▸ ";color:var(--amber-dim)}
+.body .times{font-family:var(--disp);font-size:.8rem;color:var(--ink-sub);letter-spacing:.05em;margin-top:6px}
+.body .price{font-size:.85rem;color:var(--ink-sub);margin-top:6px}
+.body .onsale{font-size:.78rem;color:var(--ink-sub);margin-top:2px}
+.body .onsale.future{color:var(--amber)}
+.actions{margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.btn-ticket{
+  display:inline-block;background:var(--amber);color:#14121a;font-weight:700;font-size:.82rem;
+  text-decoration:none;padding:8px 18px;border-radius:4px;
+}
+.btn-ticket:hover{opacity:.9}
+.flyer-link{font-size:.8rem;color:var(--amber);text-decoration:none}
+.flyer-link:hover{text-decoration:underline}
+.arch-link{font-size:.8rem;color:var(--amber);text-decoration:none}
+.arch-link:hover{text-decoration:underline}
+.note{font-size:.82rem;color:var(--ink-sub);margin-top:8px;white-space:pre-wrap}
+
+.empty{text-align:center;color:var(--ink-sub);padding:20px 0;font-size:.88rem}
+footer{text-align:center;color:var(--ink-sub);font-size:.75rem;padding:32px;letter-spacing:.1em}
+
+#lightbox{position:fixed;inset:0;background:rgba(10,9,14,.92);display:none;place-items:center;z-index:100;cursor:zoom-out;padding:24px}
+#lightbox.show{display:grid}
+#lightbox img{max-width:100%;max-height:100%;border-radius:4px}
+
+@media (max-width:560px){
+  .show{padding:16px;gap:14px}
+  .date-box .d{font-size:1.6rem}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>LIVE <span>SCHEDULE</span></h1>
+  <nav class="nav">
+    <a href="index.html">LIVE ARCHIVE</a>
+    <a href="shows.html" class="active">SCHEDULE</a>
+    <a href="songs.html">SONG LIST</a>
+  </nav>
+</header>
+
+<main id="main"></main>
+<footer>スウィーティ ライブ予定</footer>
+
+<script>
+document.write('<scr'+'ipt src="shows.js?v='+Date.now()+'"></scr'+'ipt>');
+</script>
+<script>
+const $ = id => document.getElementById(id);
+const main = $("main");
+const WD = ["日","月","火","水","木","金","土"];
+const todayStr = new Date().toLocaleDateString("sv-SE"); /* YYYY-MM-DD ローカル */
+
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function dateParts(d){
+  const [y,m,dd]=d.split("-");
+  const wd=WD[new Date(+y,+m-1,+dd).getDay()];
+  return {y,m,d:dd,w:wd};
+}
+
+function card(s, isPast){
+  const p=dateParts(s.date);
+  const times=[s.open?`OPEN ${s.open}`:"", s.start?`START ${s.start}`:""].filter(Boolean).join(" / ");
+  const onsaleFuture = s.onsale && s.onsale>todayStr;
+  return `
+  <article class="show ${isPast?"past":""}">
+    <div class="date-box">
+      <div class="m">${p.y}.${p.m}</div>
+      <div class="d">${p.d}</div>
+      <div class="w">${p.w}</div>
+    </div>
+    <div class="body">
+      ${s.title?`<div class="title">${esc(s.title)}</div>`:""}
+      <div class="venue">${esc(s.venue)}</div>
+      ${times?`<div class="times">${times}</div>`:""}
+      ${s.price?`<div class="price">${esc(s.price)}</div>`:""}
+      ${s.onsale?`<div class="onsale ${onsaleFuture?"future":""}">チケット発売: ${esc(s.onsale.replace(/-/g,"."))}${onsaleFuture?" (予定)":""}</div>`:""}
+      <div class="actions">
+        ${!isPast && s.ticket?`<a class="btn-ticket" href="${esc(s.ticket)}" target="_blank" rel="noopener">チケット購入</a>`:""}
+        ${s.flyer?`<a class="flyer-link" href="#" data-flyer="${esc(s.flyer)}">告知画像</a>`:""}
+        ${isPast?`<a class="arch-link" href="index.html?q=${encodeURIComponent(s.venue)}">アーカイブで見る ›</a>`:""}
+      </div>
+      ${s.note?`<div class="note">${esc(s.note)}</div>`:""}
+    </div>
+  </article>`;
+}
+
+function render(){
+  const upcoming = SHOWS.filter(s=>s.date>=todayStr).sort((a,b)=>a.date.localeCompare(b.date));
+  const past = SHOWS.filter(s=>s.date<todayStr).sort((a,b)=>b.date.localeCompare(a.date));
+  let html="";
+  html+=`<div class="section-label">UPCOMING</div>`;
+  html+= upcoming.length ? upcoming.map(s=>card(s,false)).join("") : `<p class="empty">現在発表されている予定はありません</p>`;
+  if(past.length){
+    html+=`<div class="section-label">PAST</div>`;
+    html+= past.map(s=>card(s,true)).join("");
+  }
+  main.innerHTML=html;
+}
+render();
+
+/* 告知画像ライトボックス */
+const lb=document.createElement("div");
+lb.id="lightbox"; lb.innerHTML="<img alt=''>";
+document.body.appendChild(lb);
+main.addEventListener("click",e=>{
+  const a=e.target.closest("[data-flyer]");
+  if(!a) return;
+  e.preventDefault();
+  lb.querySelector("img").src=a.dataset.flyer;
+  lb.classList.add("show");
+});
+lb.addEventListener("click",()=>lb.classList.remove("show"));
+document.addEventListener("keydown",e=>{ if(e.key==="Escape") lb.classList.remove("show"); });
+</script>
+</body>
+</html>

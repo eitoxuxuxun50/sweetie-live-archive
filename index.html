@@ -41,6 +41,10 @@ header h1{
 }
 header h1 span{color:var(--amber)}
 header p{margin-top:10px;color:var(--ink-sub);font-size:.85rem;letter-spacing:.12em}
+.nav{margin-top:16px;display:flex;gap:18px;justify-content:center;font-size:.8rem}
+.nav a{color:var(--ink-sub);text-decoration:none;letter-spacing:.08em;padding-bottom:2px;border-bottom:1px solid transparent}
+.nav a:hover{color:var(--amber)}
+.nav a.active{color:var(--amber);border-color:var(--amber-dim)}
 
 /* ---- コントロール ---- */
 .controls{
@@ -135,6 +139,11 @@ footer{text-align:center;color:var(--ink-sub);font-size:.75rem;padding:32px;lett
 <header>
   <h1>SWEETIE <span>LIVE ARCHIVE</span></h1>
   <p>スウィーティライブアーカイブ</p>
+  <nav class="nav">
+    <a href="index.html" class="active">LIVE ARCHIVE</a>
+    <a href="shows.html">SCHEDULE</a>
+    <a href="songs.html">SONG LIST</a>
+  </nav>
 </header>
 
 <div class="controls">
@@ -289,6 +298,10 @@ list.addEventListener("toggle",e=>{
 
 tourSel.addEventListener("change",render);
 yearSel.addEventListener("change",render);
+
+/* songs.html から ?q=曲名 で来た場合、その曲で初期検索 */
+const initQ = new URLSearchParams(location.search).get("q");
+if(initQ) q.value = initQ;
 render();
 </script>
 </body>

@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>楽曲リスト | スウィーティライブアーカイブ</title>
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=Oswald:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#14121a;--bg-raise:#1d1a26;--line:#332e42;
+  --amber:#f0a03c;--amber-dim:#8a6a3a;--ink:#e8e4da;--ink-sub:#9a94a8;
+  --disp:"Oswald","Zen Kaku Gothic New",sans-serif;
+  --serif:"Shippori Mincho",serif;
+  --body:"Zen Kaku Gothic New",sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);line-height:1.7}
+
+header{padding:56px 24px 32px;text-align:center;position:relative;overflow:hidden}
+header::before{
+  content:"";position:absolute;top:-120px;left:50%;transform:translateX(-50%);
+  width:520px;height:340px;
+  background:radial-gradient(ellipse at center top, rgba(240,160,60,.16), transparent 70%);
+  pointer-events:none;
+}
+header h1{font-family:var(--disp);font-weight:600;font-size:clamp(1.8rem,5vw,2.8rem);letter-spacing:.16em}
+header h1 span{color:var(--amber)}
+.nav{margin-top:12px;display:flex;gap:18px;justify-content:center;font-size:.8rem}
+.nav a{color:var(--ink-sub);text-decoration:none;letter-spacing:.08em;padding-bottom:2px;border-bottom:1px solid transparent}
+.nav a:hover{color:var(--amber)}
+.nav a.active{color:var(--amber);border-color:var(--amber-dim)}
+
+.controls{max-width:900px;margin:0 auto;padding:0 24px 8px;display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+.controls input,.controls select{
+  background:var(--bg-raise);border:1px solid var(--line);color:var(--ink);
+  font-family:var(--body);font-size:.9rem;padding:10px 14px;border-radius:4px;
+}
+.controls input{flex:1;min-width:180px}
+.controls input:focus,.controls select:focus{outline:2px solid var(--amber);outline-offset:1px}
+.controls input::placeholder{color:var(--ink-sub)}
+#count{color:var(--ink-sub);font-size:.8rem;margin-left:auto;letter-spacing:.05em}
+
+main{max-width:900px;margin:0 auto;padding:20px 24px 60px}
+table{width:100%;border-collapse:collapse}
+thead th{
+  font-family:var(--disp);font-size:.72rem;letter-spacing:.15em;color:var(--ink-sub);
+  text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);
+  cursor:pointer;user-select:none;white-space:nowrap;
+}
+thead th:hover{color:var(--amber)}
+thead th .arw{color:var(--amber);font-size:.7rem}
+tbody td{padding:14px 12px;border-bottom:1px solid var(--line);font-size:.92rem;vertical-align:top}
+.t-title{font-family:var(--serif);font-weight:700;font-size:1.02rem}
+.t-note{display:block;color:var(--ink-sub);font-size:.78rem;margin-top:2px}
+.chip{
+  display:inline-block;font-family:var(--disp);font-size:.72rem;letter-spacing:.05em;
+  padding:2px 8px;border:1px solid var(--line);border-radius:999px;color:var(--ink);white-space:nowrap;
+}
+.chip.key{color:var(--amber);border-color:var(--amber-dim)}
+.num{font-family:var(--disp);color:var(--ink);white-space:nowrap}
+.rel{font-family:var(--disp);color:var(--ink-sub);font-size:.85rem;white-space:nowrap}
+.live-link{color:var(--amber);text-decoration:none;font-size:.78rem;white-space:nowrap}
+.live-link:hover{text-decoration:underline}
+.links{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.ext{display:inline-flex;align-items:center;gap:4px;font-size:.74rem;text-decoration:none;padding:3px 9px;border-radius:999px;border:1px solid var(--line);white-space:nowrap}
+.ext svg{width:13px;height:13px}
+.ext.sp{color:#1DB954;border-color:#1a5c34}
+.ext.yt{color:#ff6b6b;border-color:#7a3232}
+.ext:hover{background:var(--bg-raise)}
+mark{background:transparent;color:var(--amber);font-weight:700}
+.empty{text-align:center;color:var(--ink-sub);padding:50px 0;font-size:.9rem}
+footer{text-align:center;color:var(--ink-sub);font-size:.75rem;padding:32px;letter-spacing:.1em}
+
+@media (max-width:600px){
+  tbody td{padding:12px 8px;font-size:.86rem}
+  thead th{padding:8px}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>SONG <span>LIST</span></h1>
+  <nav class="nav">
+    <a href="index.html">LIVE ARCHIVE</a>
+    <a href="shows.html">SCHEDULE</a>
+    <a href="songs.html" class="active">SONG LIST</a>
+  </nav>
+</header>
+
+<div class="controls">
+  <input id="q" type="search" placeholder="曲名で検索" aria-label="検索">
+  <select id="key" aria-label="キーで絞り込み"><option value="">全キー</option></select>
+  <select id="capo" aria-label="カポで絞り込み"><option value="">全カポ</option></select>
+  <span id="count"></span>
+</div>
+
+<main>
+  <table>
+    <thead>
+      <tr>
+        <th data-sort="title">曲名 <span class="arw"></span></th>
+        <th data-sort="release">RELEASE <span class="arw"></span></th>
+        <th data-sort="length">TIME <span class="arw"></span></th>
+        <th data-sort="key">KEY <span class="arw"></span></th>
+        <th data-sort="capo">CAPO <span class="arw"></span></th>
+        <th>LINKS</th>
+      </tr>
+    </thead>
+    <tbody id="rows"></tbody>
+  </table>
+  <p id="empty" class="empty" hidden>該当する曲がありません</p>
+</main>
+<footer>スウィーティ 楽曲リスト</footer>
+
+<script>
+/* videos.jsは不要。songs.jsをキャッシュ無効で読み込む */
+document.write('<scr'+'ipt src="songs.js?v='+Date.now()+'"></scr'+'ipt>');
+</script>
+<script>
+const $ = id => document.getElementById(id);
+const q = $("q"), keySel = $("key"), capoSel = $("capo");
+const rows = $("rows"), count = $("count"), empty = $("empty");
+
+let sortKey = "release", sortDir = -1; /* 初期:リリース新しい順 */
+
+/* プルダウン生成 */
+[...new Set(SONGS.map(s=>s.key).filter(Boolean))].sort().forEach(k=>{
+  keySel.insertAdjacentHTML("beforeend",`<option>${k}</option>`);
+});
+[...new Set(SONGS.map(s=>s.capo))].sort((a,b)=>a-b).forEach(c=>{
+  capoSel.insertAdjacentHTML("beforeend",`<option value="${c}">カポ ${c}</option>`);
+});
+
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function hl(s,kw){
+  s=String(s);
+  if(!kw) return esc(s);
+  const i=s.toLowerCase().indexOf(kw.toLowerCase());
+  if(i<0) return esc(s);
+  return esc(s.slice(0,i))+"<mark>"+esc(s.slice(i,i+kw.length))+"</mark>"+esc(s.slice(i+kw.length));
+}
+function secs(t){ /* "4:12" -> 252 。ソート用 */
+  if(!t) return -1;
+  const p=String(t).split(":").map(Number);
+  return p.length===2 ? p[0]*60+p[1] : (Number(t)||-1);
+}
+
+function render(){
+  const kw=q.value.trim(), fk=keySel.value, fc=capoSel.value;
+  let list=SONGS.filter(s=>{
+    if(fk && s.key!==fk) return false;
+    if(fc!=="" && String(s.capo)!==fc) return false;
+    if(kw && !s.title.toLowerCase().includes(kw.toLowerCase())) return false;
+    return true;
+  });
+  list.sort((a,b)=>{
+    let x,y;
+    if(sortKey==="length"){ x=secs(a.length); y=secs(b.length); }
+    else if(sortKey==="capo"){ x=a.capo; y=b.capo; }
+    else { x=a[sortKey]||""; y=b[sortKey]||""; }
+    if(x<y) return -1*sortDir;
+    if(x>y) return 1*sortDir;
+    return 0;
+  });
+  count.textContent=`${list.length} / ${SONGS.length} 曲`;
+  document.querySelectorAll("thead th[data-sort] .arw").forEach(a=>a.textContent="");
+  const th=document.querySelector(`thead th[data-sort="${sortKey}"] .arw`);
+  if(th) th.textContent=sortDir>0?"▲":"▼";
+
+  if(!list.length){ rows.innerHTML=""; empty.hidden=false; return; }
+  empty.hidden=true;
+  rows.innerHTML=list.map(s=>`
+    <tr>
+      <td>
+        <span class="t-title">${hl(s.title,kw)}</span>
+        ${s.note?`<span class="t-note">${esc(s.note)}</span>`:""}
+      </td>
+      <td class="rel">${s.release?esc(s.release.replace(/-/g,".")):"—"}</td>
+      <td class="num">${s.length?esc(s.length):"—"}</td>
+      <td>${s.key?`<span class="chip key">${esc(s.key)}</span>`:"—"}</td>
+      <td>${s.capo>0?`<span class="chip">Capo ${s.capo}</span>`:(s.capo===0?`<span class="chip">なし</span>`:"—")}</td>
+      <td>
+        <div class="links">
+          ${s.spotify?`<a class="ext sp" href="${esc(s.spotify)}" target="_blank" rel="noopener" title="Spotify"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.5 17.3c-.2.3-.6.4-.9.2-2.5-1.5-5.6-1.9-9.3-1-.4.1-.7-.1-.8-.5s.1-.7.5-.8c4-.9 7.5-.5 10.3 1.2.3.2.4.6.2.9zm1.5-3.3c-.3.4-.7.5-1.1.3-2.9-1.8-7.3-2.3-10.7-1.3-.4.1-.9-.1-1-.6s.1-.9.6-1c3.9-1.2 8.7-.6 12 1.5.4.2.5.7.2 1.1zm.1-3.4C15.2 5.3 8.7 5.1 5.1 6.2c-.5.2-1.1-.1-1.3-.7s.1-1.1.7-1.3c4.2-1.3 11.4-1 15.9 1.6.5.3.7 1 .4 1.5-.3.4-.9.6-1.4.3z"/></svg>Spotify</a>`:""}
+          ${s.youtube?`<a class="ext yt" href="${esc(s.youtube)}" target="_blank" rel="noopener" title="YouTube"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M23.5 6.2a3 3 0 00-2.1-2.1C19.5 3.6 12 3.6 12 3.6s-7.5 0-9.4.5A3 3 0 00.5 6.2C0 8.1 0 12 0 12s0 3.9.5 5.8a3 3 0 002.1 2.1c1.9.5 9.4.5 9.4.5s7.5 0 9.4-.5a3 3 0 002.1-2.1c.5-1.9.5-5.8.5-5.8s0-3.9-.5-5.8zM9.6 15.6V8.4l6.2 3.6z"/></svg>MV</a>`:""}
+          <a class="live-link" href="index.html?q=${encodeURIComponent(s.title)}">ライブ ›</a>
+        </div>
+      </td>
+    </tr>`).join("");
+}
+
+document.querySelectorAll("thead th[data-sort]").forEach(th=>{
+  th.addEventListener("click",()=>{
+    const k=th.dataset.sort;
+    if(sortKey===k){ sortDir*=-1; }
+    else { sortKey=k; sortDir=(k==="release")?-1:1; }
+    render();
+  });
+});
+q.addEventListener("input",render);
+keySel.addEventListener("change",render);
+capoSel.addEventListener("change",render);
+render();
+</script>
+</body>
+</html>

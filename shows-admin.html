@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>ライブ予定入力</title>
+<style>
+:root{--bg:#14121a;--raise:#1d1a26;--line:#332e42;--amber:#f0a03c;--ink:#e8e4da;--sub:#9a94a8}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:"Zen Kaku Gothic New",sans-serif;line-height:1.7;padding:32px 16px;max-width:640px;margin:0 auto}
+h1{font-size:1.2rem;letter-spacing:.1em;margin-bottom:4px}
+p.note{color:var(--sub);font-size:.8rem;margin-bottom:24px}
+label{display:block;font-size:.8rem;color:var(--sub);margin:14px 0 4px;letter-spacing:.05em}
+select,input,textarea{width:100%;background:var(--raise);border:1px solid var(--line);color:var(--ink);font-family:inherit;font-size:.95rem;padding:10px 12px;border-radius:4px}
+select:focus,input:focus,textarea:focus{outline:2px solid var(--amber);outline-offset:1px}
+textarea{min-height:70px;resize:vertical}
+.hint{font-size:.72rem;color:var(--sub);margin-top:2px}
+.row{display:flex;gap:12px}.row>div{flex:1}
+button{margin-top:20px;background:var(--amber);color:#14121a;border:0;border-radius:4px;font-family:inherit;font-weight:700;font-size:.95rem;padding:12px 24px;cursor:pointer}
+button.copy{background:transparent;color:var(--amber);border:1px solid var(--amber)}
+pre{margin-top:16px;background:var(--raise);border:1px solid var(--line);border-radius:4px;padding:16px;font-size:.8rem;overflow-x:auto;white-space:pre-wrap;word-break:break-all}
+#msg{color:var(--amber);font-size:.8rem;margin-left:12px}
+</style>
+</head>
+<body>
+<div id="gate" style="position:fixed;inset:0;background:var(--bg);z-index:200;display:grid;place-items:center;padding:24px">
+  <div style="width:100%;max-width:320px">
+    <label for="pw">パスワード</label>
+    <input id="pw" type="password" autocomplete="off">
+    <button id="pwbtn" style="width:100%">入る</button>
+    <p id="pwmsg" class="hint" style="margin-top:8px"></p>
+  </div>
+</div>
+
+<h1>ライブ予定入力</h1>
+<p class="note">入力→GitHubに保存。shows.js を丸ごと更新する</p>
+
+<label for="entry">編集対象</label>
+<select id="entry"><option value="-1">新規追加</option></select>
+<p class="hint">既存予定を選ぶと内容が読み込まれる</p>
+
+<label for="date">公演日</label>
+<input id="date" type="date">
+
+<div class="row">
+  <div><label for="open">開場</label><input id="open" placeholder="18:00"></div>
+  <div><label for="start">開演</label><input id="start" placeholder="18:30"></div>
+</div>
+
+<label for="title">公演名</label>
+<input id="title" placeholder="ワンマン「タイトル」/ 対バン名など">
+
+<label for="venue">会場</label>
+<input id="venue" placeholder="梅田Shangri-La">
+
+<label for="price">チケット価格</label>
+<input id="price" placeholder="前売 3,500円 / 当日 4,000円">
+
+<label for="onsale">チケット発売日</label>
+<input id="onsale" type="date">
+
+<label for="ticket">チケット購入URL(任意)</label>
+<input id="ticket" placeholder="https://...">
+
+<label for="flyerfile">告知画像(任意)</label>
+<input id="flyerfile" type="file" accept="image/*">
+<p class="hint">選択するとGitHub保存時に flyers/公演日.拡張子 でアップロードされる</p>
+<input id="flyer" placeholder="既にリポジトリにある画像はパスを直接入力">
+
+<label for="notetxt">メモ(任意)</label>
+<textarea id="notetxt" placeholder="対バン相手、備考など"></textarea>
+
+<button id="gen">生成</button>
+<button id="save" class="copy">GitHubに保存</button>
+<button id="copy" class="copy" hidden>コピー</button><span id="msg"></span>
+<pre id="out" hidden></pre>
+
+<details id="ghset" style="margin-top:28px">
+  <summary style="cursor:pointer;color:var(--sub);font-size:.8rem">GitHub連携設定(初回のみ)</summary>
+  <label for="gh_owner">ユーザー名</label><input id="gh_owner">
+  <label for="gh_repo">リポジトリ名</label><input id="gh_repo">
+  <label for="gh_branch">ブランチ</label><input id="gh_branch" placeholder="main">
+  <label for="gh_token">Personal Access Token</label><input id="gh_token" type="password">
+  <p class="hint">admin.html と同じ設定が共有される</p>
+  <button id="ghsave" class="copy">設定を保存</button>
+</details>
+
+<script>
+document.write('<scr'+'ipt src="shows.js?v='+Date.now()+'"></scr'+'ipt>');
+</script>
+<script>
+const $ = id => document.getElementById(id);
+
+const PW_HASH = "96d28bd0c687c2d8295bf0463112eb1b0ba703dc4d13fa2b85890e3b10093ffa";
+async function sha256(s){
+  const buf=await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s));
+  return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,"0")).join("");
+}
+async function tryUnlock(pw){
+  if(await sha256(pw)===PW_HASH){ sessionStorage.setItem("unlocked","1"); $("gate").remove(); return true; }
+  return false;
+}
+if(sessionStorage.getItem("unlocked")==="1"){ $("gate").remove(); }
+else{
+  $("pwbtn").addEventListener("click", async ()=>{ if(!await tryUnlock($("pw").value)) $("pwmsg").textContent="違う"; });
+  $("pw").addEventListener("keydown", async e=>{ if(e.key==="Enter" && !await tryUnlock($("pw").value)) $("pwmsg").textContent="違う"; });
+}
+
+const DATA = (typeof SHOWS !== "undefined") ? SHOWS.slice() : [];
+DATA.sort((a,b)=>b.date.localeCompare(a.date));
+DATA.forEach((s,i)=>{
+  const o=document.createElement("option");
+  o.value=i; o.textContent=`${s.date} ${s.title||s.venue}`;
+  $("entry").appendChild(o);
+});
+$("entry").addEventListener("change", ()=>{
+  const i=+$("entry").value;
+  const keys=["date","open","start","title","venue","price","onsale","ticket","flyer"];
+  if(i<0){ keys.forEach(k=>$(k).value=""); $("notetxt").value=""; return; }
+  const s=DATA[i];
+  keys.forEach(k=>$(k).value=s[k]||"");
+  $("notetxt").value=s.note||"";
+});
+
+function j(s){ return JSON.stringify(s); }
+function entryToText(s){
+  const fields=[
+    `    date: ${j(s.date)}`,
+    `    open: ${j(s.open)}`,
+    `    start: ${j(s.start)}`,
+    `    venue: ${j(s.venue)}`,
+    `    title: ${j(s.title)}`,
+    `    price: ${j(s.price)}`,
+    `    onsale: ${j(s.onsale)}`
+  ];
+  if(s.ticket) fields.push(`    ticket: ${j(s.ticket)}`);
+  if(s.flyer) fields.push(`    flyer: ${j(s.flyer)}`);
+  if(s.note) fields.push(`    note: ${j(s.note)}`);
+  return `  {\n${fields.join(",\n")}\n  }`;
+}
+const HEADER=`/* ============================================================
+   ライブ予定データ:shows-admin.html で生成して丸ごと置き換える
+   date / open / start / venue / title / price / onsale / ticket / flyer / note
+   ============================================================ */`;
+
+function buildOutput(){
+  if(!$("date").value){ $("msg").textContent="公演日が未入力"; return null; }
+  if(!$("venue").value.trim()){ $("msg").textContent="会場が未入力"; return null; }
+  $("msg").textContent="";
+  const f=$("flyerfile").files[0];
+  if(f && !$("flyer").value.trim()){
+    const ext=(f.name.split(".").pop()||"jpg").toLowerCase();
+    $("flyer").value=`flyers/${$("date").value}.${ext}`;
+  }
+  const s={
+    date:$("date").value, open:$("open").value.trim(), start:$("start").value.trim(),
+    venue:$("venue").value.trim(), title:$("title").value.trim(),
+    price:$("price").value.trim(), onsale:$("onsale").value,
+    ticket:$("ticket").value.trim(), flyer:$("flyer").value.trim(), note:$("notetxt").value.trim()
+  };
+  const i=+$("entry").value;
+  if(i>=0) DATA[i]=s; else DATA.unshift(s);
+  DATA.sort((a,b)=>b.date.localeCompare(a.date));
+  return `${HEADER}\nconst SHOWS = [\n${DATA.map(entryToText).join(",\n")}\n];\n`;
+}
+
+$("gen").addEventListener("click", ()=>{
+  const out=buildOutput(); if(!out) return;
+  $("out").textContent=out; $("out").hidden=false; $("copy").hidden=false;
+  $("msg").textContent="shows.js の中身を丸ごとこれに置き換える";
+});
+$("copy").addEventListener("click", async ()=>{
+  await navigator.clipboard.writeText($("out").textContent);
+  $("msg").textContent="コピーした";
+});
+
+const CONF_KEY="gh_conf";
+function loadConf(){ try{ return JSON.parse(localStorage.getItem(CONF_KEY))||{}; }catch{ return {}; } }
+(function(){ const c=loadConf();
+  if(c.owner)$("gh_owner").value=c.owner; if(c.repo)$("gh_repo").value=c.repo;
+  if(c.branch)$("gh_branch").value=c.branch; if(c.token)$("gh_token").value=c.token;
+})();
+$("ghsave").addEventListener("click", ()=>{
+  localStorage.setItem(CONF_KEY, JSON.stringify({
+    owner:$("gh_owner").value.trim(), repo:$("gh_repo").value.trim(),
+    branch:$("gh_branch").value.trim()||"main", token:$("gh_token").value.trim()
+  }));
+  $("msg").textContent="設定を保存した";
+});
+async function ghPut(conf, path, base64Content, message){
+  const api=`https://api.github.com/repos/${conf.owner}/${conf.repo}/contents/${path}`;
+  const headers={"Authorization":`Bearer ${conf.token}`,"Accept":"application/vnd.github+json"};
+  let sha; const r0=await fetch(`${api}?ref=${conf.branch}`,{headers});
+  if(r0.ok) sha=(await r0.json()).sha;
+  const body={message, content:base64Content, branch:conf.branch}; if(sha) body.sha=sha;
+  const r=await fetch(api,{method:"PUT",headers,body:JSON.stringify(body)});
+  if(!r.ok) throw new Error(`${path}: ${r.status} ${(await r.json()).message||""}`);
+}
+function fileToBase64(file){
+  return new Promise((res,rej)=>{ const r=new FileReader();
+    r.onload=()=>res(r.result.split(",")[1]); r.onerror=()=>rej(new Error("画像の読み込み失敗")); r.readAsDataURL(file); });
+}
+$("save").addEventListener("click", async ()=>{
+  const conf=loadConf();
+  if(!conf.token||!conf.owner||!conf.repo){ $("msg").textContent="先に下のGitHub連携設定を保存する"; $("ghset").open=true; return; }
+  const out=buildOutput(); if(!out) return;
+  $("out").textContent=out; $("out").hidden=false; $("save").disabled=true;
+  try{
+    const f=$("flyerfile").files[0];
+    if(f){ $("msg").textContent="画像をアップロード中…";
+      await ghPut(conf,$("flyer").value.trim(),await fileToBase64(f),`add flyer ${$("date").value}`); }
+    $("msg").textContent="shows.js を更新中…";
+    await ghPut(conf,"shows.js",btoa(unescape(encodeURIComponent(out))),`update shows.js (${$("date").value})`);
+    $("msg").textContent="保存完了。数十秒でサイトに反映される";
+  }catch(e){ $("msg").textContent="エラー: "+e.message; }
+  finally{ $("save").disabled=false; }
+});
+</script>
+</body>
+</html>
