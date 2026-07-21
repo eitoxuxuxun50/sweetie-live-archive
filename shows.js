@@ -1,7 +1,7 @@
 /* ============================================================
    ライブ予定データ:shows-admin.html で生成して丸ごと置き換える
-   date / open / start / act / venue / title / price / onsale
-   / posted / ticket / flyer / mapurl / address / floor / note
+   date / open / start / end / act / calhour / calmin / venue
+   / title / price / onsale / posted / ticket / flyer / mapurl / address / floor / note
    ============================================================ */
 const SHOWS = [
   {
@@ -22,7 +22,7 @@ const SHOWS = [
   {
     date: "2026-09-20",
     open: "12:30",
-    start: "18:00",
+    end: "18:00",
     venue: "SPACE DOG!2nd",
     title: "風立つ、かもめ、あさひの献立2026",
     price: "0円+飲食チケット¥1000別途要",
@@ -42,7 +42,7 @@ const SHOWS = [
     title: "箕面の森の音楽会",
     price: "無料",
     onsale: "",
-    act: "17:10〜",
+    act: "17:10",
     posted: "https://x.com/sweetie_genki/status/2076680746081927528?s=46",
     mapurl: "https://maps.app.goo.gl/kiPGkmndD8bFzZ7c7?g_st=ic",
     address: "大阪府箕面市箕面公園２−２３"
@@ -70,7 +70,7 @@ const SHOWS = [
     title: "やまぴーpre.「アイス将軍vol.15」",
     price: "3,500円",
     onsale: "2026-04-26",
-    act: "16:40〜17:10",
+    act: "16:40",
     posted: "https://x.com/sweetie_genki/status/2048060985173586291?s=46",
     mapurl: "https://maps.app.goo.gl/KUcBZCRbboBo5z9a7?g_st=ic",
     address: "〒192-0084 東京都八王子市三崎町２−７",
@@ -82,7 +82,7 @@ const SHOWS = [
     open: "18:30",
     start: "19:00",
     venue: "堺FANDANGO",
-    title: "Etranger “Kishibe” Release TOUR 2026",
+    title: "Etranger \u201cKishibe\u201d Release TOUR 2026",
     price: "前売 2,500円 / 当日 3,000円",
     onsale: "2026-07-01",
     posted: "https://x.com/fandango_sakai/status/2040303578435530936?s=46",

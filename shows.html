@@ -149,7 +149,7 @@ function dateParts(d){
 
 function card(s, isPast){
   const p=dateParts(s.date);
-  const times=[s.open?`OPEN ${s.open}`:"", s.start?`START ${s.start}`:""].filter(Boolean).join(" / ");
+  const times=[s.open?`OPEN ${s.open}`:"", s.start?`START ${s.start}`:"", s.end?`END ${s.end}`:""].filter(Boolean).join(" / ");
   const actLine = s.act?`<span class="act-time">スウィーティ出番 ${esc(s.act)}</span>`:"";
   const onsaleFuture = s.onsale && s.onsale>todayStr;
   const hasDetail = times||s.act||s.price||s.onsale||s.address||s.mapurl||s.floor||s.posted||(!isPast&&s.ticket)||s.flyer||isPast||s.note;
@@ -249,23 +249,41 @@ function parseHM(t){
 }
 function buildICS(s){
   const [y,mo,d]=s.date.split("-").map(Number);
-  let start, endMin; /* endMin: 開始からの分数 */
-  const open=parseHM(s.open), act=parseHM(s.act);
+  const open=parseHM(s.open), start_=parseHM(s.start), endT=parseHM(s.end), act=parseHM(s.act);
+  let beginTime, endMinutes; /* endMinutes: 開始からの分数(終了時刻指定がある場合は不使用) */
+  let explicitEnd=null;
+
   if(open){
-    start=open; endMin=240; /* オープンあり: 4時間 */
+    /* オープンあり → オープンを起点。終了あればそこまで、なければ選択時間(既定4時間) */
+    beginTime=open;
+    if(endT) explicitEnd=endT;
+    else endMinutes=(s.calhour && +s.calhour>0)? +s.calhour*60 : 240;
   }else if(act){
-    start=act;
-    endMin=(s.caldur && +s.caldur>0)? +s.caldur : 40; /* 出番から。既定40分、フォーム指定があれば優先 */
+    /* オープンなし・出番あり → 出番から選択分(既定40分) */
+    beginTime=act;
+    endMinutes=(s.calmin && +s.calmin>0)? +s.calmin : 40;
+  }else if(start_){
+    /* オープン・出番なし・開演あり → 終了あればそこまで、なければ4時間 */
+    beginTime=start_;
+    if(endT) explicitEnd=endT;
+    else endMinutes=240;
   }else{
-    /* 時刻情報なし: 終日予定 */
-    start=null;
+    beginTime=null; /* 終日 */
   }
+
   let dtStart, dtEnd, allDay=false;
-  if(start){
-    dtStart=toICSDate(y,mo,d,start.h,start.mi);
-    let em=start.h*60+start.mi+endMin;
+  if(beginTime){
+    dtStart=toICSDate(y,mo,d,beginTime.h,beginTime.mi);
+    let em;
+    if(explicitEnd){
+      em=explicitEnd.h*60+explicitEnd.mi;
+      /* 終了が開始より前なら翌日扱い */
+      if(em<=beginTime.h*60+beginTime.mi) em+=1440;
+    }else{
+      em=beginTime.h*60+beginTime.mi+endMinutes;
+    }
     let ed=d, eh=Math.floor(em/60), emin=em%60;
-    if(eh>=24){ eh-=24; ed+=1; } /* 日跨ぎ簡易対応 */
+    while(eh>=24){ eh-=24; ed+=1; }
     dtEnd=toICSDate(y,mo,ed,eh,emin);
   }else{
     allDay=true;
@@ -273,9 +291,13 @@ function buildICS(s){
     const nd=new Date(y,mo-1,d+1);
     dtEnd=`${nd.getFullYear()}${pad(nd.getMonth()+1)}${pad(nd.getDate())}`;
   }
-  const title=(s.title?s.title+" / ":"")+"スウィーティ";
+
+  /* タイトル: 出番記載時は「(イベント名)/スウィーティ (出番:時刻)」 */
+  let title=(s.title?s.title+" / ":"")+"スウィーティ";
+  if(s.act) title+=` (出番:${s.act})`;
+
   const locParts=[s.venue, s.floor, s.address].filter(Boolean).join(" ");
-  const desc=[s.act?`スウィーティ出番 ${s.act}`:"", s.open?`OPEN ${s.open}`:"", s.start?`START ${s.start}`:"", s.mapurl?s.mapurl:""].filter(Boolean).join("\\n");
+  const desc=[s.act?`スウィーティ出番 ${s.act}`:"", s.open?`OPEN ${s.open}`:"", s.start?`START ${s.start}`:"", s.end?`終了 ${s.end}`:"", s.mapurl?s.mapurl:""].filter(Boolean).join("\\n");
   const dt=allDay
     ? `DTSTART;VALUE=DATE:${dtStart}\r\nDTEND;VALUE=DATE:${dtEnd}`
     : `DTSTART;TZID=Asia/Tokyo:${dtStart}\r\nDTEND;TZID=Asia/Tokyo:${dtEnd}`;
