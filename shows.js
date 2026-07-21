@@ -46,7 +46,6 @@ const SHOWS = [
     price: "無料",
     onsale: "",
     act: "17:10",
-    setup: "アコースティック",
     posted: "https://x.com/sweetie_genki/status/2076680746081927528?s=46",
     mapurl: "https://maps.app.goo.gl/kiPGkmndD8bFzZ7c7?g_st=ic",
     address: "大阪府箕面市箕面公園２−２３"
@@ -59,6 +58,7 @@ const SHOWS = [
     title: "おなじ街",
     price: "2,000円+1D",
     onsale: "2026-06-03",
+    setup: "かけおちごっこ",
     posted: "https://x.com/kakeochigokko/status/2062128111693816082?s=46",
     flyer: "flyers/2026-07-31.jpeg",
     mapurl: "https://maps.app.goo.gl/TkA6Vo78JyF9vZZu7?g_st=ic",
