@@ -49,6 +49,7 @@ const SHOWS = [
     posted: "https://x.com/seiwamachi/status/2072154230907924951?s=46",
     flyer: "flyers/2026-09-06.jpeg",
     mapurl: "https://maps.app.goo.gl/K97RLcz7dyQv9W1Z6?g_st=ic",
+    address: "大阪府大阪市天王寺区寺田町１丁目５",
     floor: "グラウンド",
     note: "小雨決行"
   },
