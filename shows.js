@@ -41,6 +41,8 @@ const SHOWS = [
     onsale: "2026-06-03",
     posted: "https://x.com/kakeochigokko/status/2062128111693816082?s=46",
     flyer: "flyers/2026-07-31.jpeg",
+    mapurl: "https://maps.app.goo.gl/TkA6Vo78JyF9vZZu7?g_st=ic",
+    address: "大阪府大阪市中央区南新町１丁目１−１ ＥＸＡ南新町ビル 1F",
     note: "RATFLAP\n川の石\nかけおちごっこ\nアタギケンスケ\n出店\nCham Cham\n無人古着家"
   },
   {
