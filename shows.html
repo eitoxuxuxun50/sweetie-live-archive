@@ -40,6 +40,12 @@ main{max-width:760px;margin:0 auto;padding:24px}
   margin:28px 0 14px;padding-bottom:8px;border-bottom:1px solid var(--line);
 }
 .section-label:first-child{margin-top:8px}
+.controls{max-width:760px;margin:0 auto;padding:0 24px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.controls select{background:var(--bg-raise);border:1px solid var(--line);color:var(--ink);font-family:var(--body);font-size:.9rem;padding:9px 14px;border-radius:4px}
+.controls select:focus{outline:2px solid var(--amber);outline-offset:1px}
+.controls #count{color:var(--ink-sub);font-size:.8rem;margin-left:auto;letter-spacing:.05em}
+.month-divider{display:flex;align-items:center;gap:12px;margin:22px 0 12px;color:var(--ink-sub);font-family:var(--disp);font-size:.82rem;letter-spacing:.15em}
+.month-divider::before,.month-divider::after{content:"";height:1px;background:var(--line);flex:1}
 
 .show{
   display:flex;gap:20px;background:var(--bg-raise);border:1px solid var(--line);
@@ -114,6 +120,12 @@ footer{text-align:center;color:var(--ink-sub);font-size:.75rem;padding:32px;lett
   </nav>
 </header>
 
+<div class="controls">
+  <select id="year" aria-label="年で絞り込み"><option value="">すべての年</option></select>
+  <select id="month" aria-label="月で絞り込み"><option value="">すべての月</option></select>
+  <span id="count"></span>
+</div>
+
 <main id="main"></main>
 <footer>スウィーティ ライブ予定</footer>
 
@@ -173,18 +185,52 @@ function card(s, isPast){
   </article>`;
 }
 
+const yearSel=$("year"), monthSel=$("month"), count=$("count");
+
+/* フィルタ用プルダウン生成(全公演の年・月から) */
+[...new Set(SHOWS.map(s=>s.date.slice(0,4)))].sort().reverse().forEach(y=>{
+  yearSel.insertAdjacentHTML("beforeend",`<option>${y}</option>`);
+});
+for(let m=1;m<=12;m++){
+  monthSel.insertAdjacentHTML("beforeend",`<option value="${String(m).padStart(2,"0")}">${m}月</option>`);
+}
+
+/* 月区切り付きでカード列を組み立てる */
+function withDividers(arr, isPast){
+  let html="", curMonth="";
+  arr.forEach(s=>{
+    const ym=s.date.slice(0,7); /* YYYY-MM */
+    if(ym!==curMonth){
+      curMonth=ym;
+      const [y,m]=ym.split("-");
+      html+=`<div class="month-divider">${y}年 ${+m}月</div>`;
+    }
+    html+=card(s,isPast);
+  });
+  return html;
+}
+
 function render(){
-  const upcoming = SHOWS.filter(s=>s.date>=todayStr).sort((a,b)=>a.date.localeCompare(b.date));
-  const past = SHOWS.filter(s=>s.date<todayStr).sort((a,b)=>b.date.localeCompare(a.date));
+  const fy=yearSel.value, fm=monthSel.value;
+  const match=s=>{
+    if(fy && !s.date.startsWith(fy)) return false;
+    if(fm && s.date.slice(5,7)!==fm) return false;
+    return true;
+  };
+  const upcoming = SHOWS.filter(s=>s.date>=todayStr && match(s)).sort((a,b)=>a.date.localeCompare(b.date));
+  const past = SHOWS.filter(s=>s.date<todayStr && match(s)).sort((a,b)=>b.date.localeCompare(a.date));
+  count.textContent=`${upcoming.length+past.length} 件`;
   let html="";
   html+=`<div class="section-label">UPCOMING</div>`;
-  html+= upcoming.length ? upcoming.map(s=>card(s,false)).join("") : `<p class="empty">現在発表されている予定はありません</p>`;
+  html+= upcoming.length ? withDividers(upcoming,false) : `<p class="empty">該当する予定はありません</p>`;
   if(past.length){
     html+=`<div class="section-label">PAST</div>`;
-    html+= past.map(s=>card(s,true)).join("");
+    html+= withDividers(past,true);
   }
   main.innerHTML=html;
 }
+yearSel.addEventListener("change",render);
+monthSel.addEventListener("change",render);
 render();
 
 /* 詳細表示トグル */
