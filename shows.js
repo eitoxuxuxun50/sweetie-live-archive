@@ -46,6 +46,7 @@ const SHOWS = [
     price: "無料",
     onsale: "",
     act: "17:10",
+    setup: "バンドセット",
     posted: "https://x.com/sweetie_genki/status/2076680746081927528?s=46",
     mapurl: "https://maps.app.goo.gl/kiPGkmndD8bFzZ7c7?g_st=ic",
     address: "大阪府箕面市箕面公園２−２３"
