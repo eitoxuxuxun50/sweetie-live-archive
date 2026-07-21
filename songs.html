@@ -54,7 +54,8 @@ thead th{
 thead th:hover{color:var(--amber)}
 thead th .arw{color:var(--amber);font-size:.7rem}
 tbody td{padding:14px 12px;border-bottom:1px solid var(--line);font-size:.92rem;vertical-align:top}
-.t-title{font-family:var(--serif);font-weight:700;font-size:1.02rem}
+.t-title{font-family:var(--serif);font-weight:700;font-size:1.02rem;word-break:keep-all;overflow-wrap:normal}
+td:first-child{min-width:8em}
 .t-note{display:block;color:var(--ink-sub);font-size:.78rem;margin-top:2px}
 .chip{
   display:inline-block;font-family:var(--disp);font-size:.72rem;letter-spacing:.05em;
@@ -76,8 +77,11 @@ mark{background:transparent;color:var(--amber);font-weight:700}
 footer{text-align:center;color:var(--ink-sub);font-size:.75rem;padding:32px;letter-spacing:.1em}
 
 @media (max-width:600px){
+  main{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  table{min-width:560px}
   tbody td{padding:12px 8px;font-size:.86rem}
   thead th{padding:8px}
+  .links{flex-wrap:nowrap}
 }
 </style>
 </head>
