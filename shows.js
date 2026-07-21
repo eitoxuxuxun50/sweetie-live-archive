@@ -18,7 +18,7 @@ const SHOWS = [
     mapurl: "https://maps.app.goo.gl/v29ihfTcMaKNE7a8A?g_st=ic",
     address: "大阪府堺市堺区向陵中町４丁４−３２",
     floor: "チボリビル1F",
-    note: "KOTARO HIMENO & THE FUJIWARA BAND\nLiTT\nかけおちごっこ"
+    note: "KOTARO HIMENO & THE FUJIWARA BAND\nLiTT\nかけおちごっこ\nTHE FRAGILE"
   },
   {
     date: "2026-09-20",
