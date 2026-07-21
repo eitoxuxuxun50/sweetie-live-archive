@@ -29,18 +29,6 @@ const SHOWS = [
     address: "大阪府箕面市箕面公園２−２３"
   },
   {
-    date: "2026-08-22",
-    open: "",
-    start: "",
-    venue: "瀧安寺前広場",
-    title: "箕面の森の音楽会",
-    price: "無料",
-    onsale: "",
-    posted: "https://x.com/sweetie_genki/status/2076680746081927528?s=46",
-    mapurl: "https://maps.app.goo.gl/kiPGkmndD8bFzZ7c7?g_st=ic",
-    address: "大阪府箕面市箕面公園２−２３"
-  },
-  {
     date: "2026-07-31",
     open: "18:30",
     start: "19:00",
