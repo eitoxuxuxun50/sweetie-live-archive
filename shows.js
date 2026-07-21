@@ -24,7 +24,7 @@ const SHOWS = [
     open: "12:30",
     start: "18:00",
     venue: "SPACE DOG!2nd",
-    title: "風立つ、かもめ、あさひの献立2026 -チャリティサーキット無料フェス-",
+    title: "風立つ、かもめ、あさひの献立2026",
     price: "0円+飲食チケット¥1000別途要",
     onsale: "2026-08-01",
     posted: "https://x.com/kondate_fes/status/2079159817311314415?s=46",
