@@ -65,6 +65,8 @@ const SHOWS = [
     price: "前売 2,500円 / 当日 3,000円",
     onsale: "2026-07-01",
     posted: "https://x.com/fandango_sakai/status/2040303578435530936?s=46",
+    mapurl: "https://maps.app.goo.gl/TG84Ap1qMsGxZz2QA?g_st=ic",
+    address: "大阪府堺市堺区堺区戎島町５丁３",
     note: "Etrnger\nメガマサヒデ\nガリザベン\n秘密のコペカチータ\nスウィーティ (band set)"
   }
 ];
