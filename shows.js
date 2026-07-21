@@ -38,6 +38,21 @@ const SHOWS = [
     floor: "2F"
   },
   {
+    date: "2026-09-06",
+    open: "15:00",
+    start: "",
+    venue: "寺田町公園",
+    title: "第14回 聖和サマーフェスタ",
+    price: "0円",
+    onsale: "",
+    end: "20:30",
+    posted: "https://x.com/seiwamachi/status/2072154230907924951?s=46",
+    flyer: "flyers/2026-09-06.jpeg",
+    mapurl: "https://maps.app.goo.gl/K97RLcz7dyQv9W1Z6?g_st=ic",
+    floor: "グラウンド",
+    note: "小雨決行"
+  },
+  {
     date: "2026-08-22",
     open: "",
     start: "",
