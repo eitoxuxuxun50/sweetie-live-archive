@@ -5,6 +5,21 @@
    ============================================================ */
 const SHOWS = [
   {
+    date: "2027-02-06",
+    open: "12:00",
+    start: "13:00",
+    venue: "ポルックスシアター",
+    title: "wkwk★Internet_fes",
+    price: "",
+    onsale: "",
+    end: "16:00",
+    setup: "アコースティック",
+    posted: "https://x.com/wkwkfes0206/status/2074087484988993594?s=46",
+    flyer: "flyers/2027-02-06.jpeg",
+    mapurl: "https://maps.app.goo.gl/3FmVzQAvDFBrzK1n8?g_st=ic",
+    address: "大阪府大阪市浪速区日本橋４丁目１４−３"
+  },
+  {
     date: "2026-09-25",
     open: "18:30",
     start: "19:00",
